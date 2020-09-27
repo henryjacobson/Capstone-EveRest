@@ -8,6 +8,8 @@ My contributions to the project will be in the machine mearning sleep characteri
 
 The first model is a long short-term memory (LSTM) neural network architecture which infers sleep characteristics from sensor data. This model will be trained with the Cleveland Family Study (CFS) public dataset. The second model receives outputs from the first, and calculates a compound sleep score for quantitatively describing sleep quality. The second model implements a Bayesian regression model trained from the MMASH (multilevel monitoring of activity and sleep in healthy people) open dataset. The second model is configured to be particularly interpretable to enable further breakdown and analysis of the score.
 
+![GitHub Logo](ML_diagram.png)
+
 I will implement the first model, and help to incorporate it into the app along with the second model which will be developed by another student.
 
 ## Done so far
