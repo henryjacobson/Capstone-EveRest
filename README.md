@@ -18,7 +18,7 @@ I will implement the first model, and help to incorporate it into the app along 
 
 The raw sensor data needs to go through some preprocessing before it can be plugged straight into a nerual network. To do this I used tools provided by the NSRR who also provided me with the CFS dataset. I used a tool called Luna to extract characterisitc information for each signal in each 5 second interval of a night's sleep. The LSTM will later characterize each interval as either awake or asleep using these intervals as input.
 
-Because there was such a large volume of data, I don't have enough storage available to hold it all at once. Therefore I wrote a script [preprocess.py](preprocess.py) that will process each polysomnography file individually as follows:
+Because there was such a large volume of data, I don't have enough storage available to hold it all at once. Therefore I wrote a script ([preprocess.py](preprocess.py)) that will process each polysomnography file individually as follows:
 
 1. Download the .edf (polysomnography) and .xml (annotation) using an NSRR provided gem
 1. Run Luna with particular commands on the .edf file to extract relevant information
