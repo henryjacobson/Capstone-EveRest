@@ -1,0 +1,6 @@
+*.db
+*.npy
+*.out
+*.xml
+*.edf
+TEMP
