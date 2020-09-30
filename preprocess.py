@@ -11,7 +11,8 @@ XML_SUFFIX = "-nsrr.xml"
 OUT_PREFIX = "debug/"
 OUT_SUFFIX = ".out"
 
-SAVE_PREFIX = "numpy/"
+FEATURES_PREFIX = "numpy/features/"
+LABELS_PREFIX = "numpy/labels/"
 
 PSD = ["SLOW", "DELTA", "THETA", "ALPHA", "SIGMA", "BETA", "GAMMA"]
 
@@ -100,12 +101,12 @@ def process(id, edf, xml, out):
         retrieve_stats('Light', arr, data, out)
 
     arr = np.array(arr)
-    np.save(SAVE_PREFIX + id + "features", arr)
+    np.save(FEATURES_PREFIX + id + "features", arr)
 
     labels = np.zeros(epochs)
     if not ERROR:
         retrieve_labels(labels, xml, out)
-    np.save(SAVE_PREFIX + id + "labels", labels)
+    np.save(LABELS_PREFIX + id + "labels", labels)
 
 
 def retrieve_labels(labels, xml, out):
@@ -148,7 +149,7 @@ def retrieve_psd(signal, arr, data, out):
         temp.seek(0)
         result = subprocess.run(['destrat', data, '+PSD', '-r', 'CH/' + signal, 'B/' + band, 'E'], stdout = temp)
         if result.returncode != 0:
-            out.write("Error Destrat " + singal + band)
+            out.write("Error Destrat " + signal + band)
             ERROR = True
             return
         temp.seek(0)
@@ -160,17 +161,16 @@ def retrieve_psd(signal, arr, data, out):
 def retrieve_stats(signal, arr, data, out):
     global ERROR
     temp = open("TEMP", "w+")
-    for band in PSD:
-        temp.seek(0)
-        result = subprocess.run(['destrat', data, '+STATS', '-r', 'CH/' + signal, 'E'], stdout = temp)
-        if result.returncode != 0:
-            out.write("Error Destrat " + singal + band)
-            ERROR = True
-            return
-        temp.seek(0)
-        for line in temp:
-            break
-        for line, a in zip(temp, arr):
-            list = line.split()
-            for i in range(3, 8):
-                a.append(float(list[i]))
+    temp.seek(0)
+    result = subprocess.run(['destrat', data, '+STATS', '-r', 'CH/' + signal, 'E'], stdout = temp)
+    if result.returncode != 0:
+        out.write("Error Destrat " + signal)
+        ERROR = True
+        return
+    temp.seek(0)
+    for line in temp:
+        break
+    for line, a in zip(temp, arr):
+        list = line.split()
+        for i in range(3, 8):
+            a.append(float(list[i]))
