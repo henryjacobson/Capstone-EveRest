@@ -4,9 +4,11 @@ For my senior Capstone project, my team and I will be devloping EveRest, a weara
 
 ## My Contributions
 
-My contributions to the project will be in the machine mearning sleep characterization side of things. I developed a plan as to how we will convert raw sensor data to a final sleep score using two separately trained models.
+My contributions to the project will be in the machine learning sleep characterization side of things. I developed a plan as to how we will convert raw sensor data to a final sleep score using two separately trained models.
 
 The first model is a long short-term memory (LSTM) neural network architecture which infers sleep characteristics from sensor data. This model will be trained with the Cleveland Family Study (CFS) public dataset. The second model receives outputs from the first, and calculates a compound sleep score for quantitatively describing sleep quality. The second model implements a Bayesian regression model trained from the MMASH (multilevel monitoring of activity and sleep in healthy people) open dataset. The second model is configured to be particularly interpretable to enable further breakdown and analysis of the score.
+
+![GitHub Logo](ML_diagram.png)
 
 I will implement the first model, and help to incorporate it into the app along with the second model which will be developed by another student.
 
@@ -16,7 +18,7 @@ I will implement the first model, and help to incorporate it into the app along 
 
 The raw sensor data needs to go through some preprocessing before it can be plugged straight into a nerual network. To do this I used tools provided by the NSRR who also provided me with the CFS dataset. I used a tool called Luna to extract characterisitc information for each signal in each 5 second interval of a night's sleep. The LSTM will later characterize each interval as either awake or asleep using these intervals as input.
 
-Because there was such a large volume of data, I don't have enough storage available to hold it all at once. Therefore I wrote a script (__preprocess.py__) that will process each polysomnography file individually as followd:
+Because there was such a large volume of data, I don't have enough storage available to hold it all at once. Therefore I wrote a script ([preprocess.py](preprocess.py)) that will process each polysomnography file individually as follows:
 
 1. Download the .edf (polysomnography) and .xml (annotation) using an NSRR provided gem
 1. Run Luna with particular commands on the .edf file to extract relevant information
