@@ -11,8 +11,8 @@ XML_SUFFIX = "-nsrr.xml"
 OUT_PREFIX = "debug/"
 OUT_SUFFIX = ".out"
 
-FEATURES_PREFIX = "numpy/features/"
-LABELS_PREFIX = "numpy/labels/"
+FEATURES_PREFIX = "data/features/"
+LABELS_PREFIX = "data/labels/"
 
 PSD = ["SLOW", "DELTA", "THETA", "ALPHA", "SIGMA", "BETA", "GAMMA"]
 
@@ -76,7 +76,7 @@ def cleanup(id, edf, xml, out):
 def process(id, edf, xml, out):
     global ERROR
     arr = []
-    signals = "sig=SNORE,THOR_EFFORT,SpO2,PULSE,Light"
+    signals = "sig=SNORE,THOR_EFFORT,SpO2,SaO2,PULSE"
     data = "psg.db"
     result = subprocess.run('luna ' + edf + " " + signals + ' -o ' + data + ' < ' + 'commands.txt', shell = True, stdout = None)
     if result.returncode != 0:
@@ -96,9 +96,10 @@ def process(id, edf, xml, out):
     if not ERROR:
         retrieve_stats('SpO2', arr, data, out)
     if not ERROR:
-        retrieve_stats('PULSE', arr, data, out)
+        retrieve_stats('SaO2', arr, data, out)
     if not ERROR:
-        retrieve_stats('Light', arr, data, out)
+        retrieve_stats('PULSE', arr, data, out)
+
 
     arr = np.array(arr)
     np.save(FEATURES_PREFIX + id + "features", arr)
@@ -169,6 +170,7 @@ def retrieve_stats(signal, arr, data, out):
         return
     temp.seek(0)
     for line in temp:
+        print(line)
         break
     for line, a in zip(temp, arr):
         list = line.split()
