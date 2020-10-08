@@ -16,7 +16,7 @@ I will implement the first model, and help to incorporate it into the app along 
 
 ### Preprocessing
 
-The raw sensor data needs to go through some preprocessing before it can be plugged straight into a nerual network. To do this I used tools provided by the NSRR who also provided me with the CFS dataset. I used a tool called Luna to extract characterisitc information for each signal in each 5 second interval of a night's sleep. The LSTM will later characterize each interval as either awake or asleep using these intervals as input.
+The raw sensor data needs to go through some preprocessing before it can be plugged straight into a neural network. To do this I used tools provided by the NSRR who also provided me with the CFS dataset. I used a tool called Luna to extract characteristic information for each signal in each 5 second interval of a night's sleep. The LSTM will later characterize each interval as either awake or asleep using these intervals as input.
 
 Because there was such a large volume of data, I don't have enough storage available to hold it all at once. Therefore I wrote a script ([preprocess.py](preprocess.py)) that will process each polysomnography file individually as follows:
 
@@ -27,3 +27,9 @@ Because there was such a large volume of data, I don't have enough storage avail
 1. Store numpy array in files, delete .edf and .xml, continue to next
 
 After running this script on each polysomnography sample, I have features and labels structured as will be expected for a Tensorflow LSTM. I can them load them and train my network once it has been developed.
+
+### Basic LSTM
+
+I have written a script ([train_model.py](preprocess.py)) that loads and formats the data into a tensor and trains a basic LSTM model in Tensorflow.
+
+I am now working on making the model more complex to achieve a better successful classification rate.
