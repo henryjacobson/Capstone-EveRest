@@ -157,7 +157,7 @@ def retrieve_psd(signal, arr, data, out):
         for line in temp:
             break
         for line, a in zip(temp, arr):
-            a.append(float32(line.split()[4]))
+            a.append(np.float32(float(line.split()[4])))
 
 def retrieve_stats(signal, arr, data, out):
     global ERROR
@@ -175,4 +175,4 @@ def retrieve_stats(signal, arr, data, out):
     for line, a in zip(temp, arr):
         list = line.split()
         for i in range(3, 8):
-            a.append(float32(list[i]))
+            a.append(np.float32(float(list[i])))
