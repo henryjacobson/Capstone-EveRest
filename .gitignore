@@ -3,5 +3,6 @@
 *.out
 *.xml
 *.edf
+*.csv*
 TEMP
 oneId.txt
