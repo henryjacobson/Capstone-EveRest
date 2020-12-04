@@ -1,6 +1,9 @@
 import subprocess
 import os
 import numpy as np
+import math
+from openpyxl import load_workbook
+from csv import reader
 
 EDF_PREFIX = "cfs/polysomnography/edfs/cfs-visit5-"
 EDF_SUFFIX = ".edf"
@@ -11,12 +14,12 @@ XML_SUFFIX = "-nsrr.xml"
 OUT_PREFIX = "debug/"
 OUT_SUFFIX = ".out"
 
-FEATURES_PREFIX = "data/features/"
-LABELS_PREFIX = "data/labels/"
+FEATURES_PREFIX = "data/mnc/features/"
+LABELS_PREFIX = "data/mnc/labels/"
 
 PSD = ["SLOW", "DELTA", "THETA", "ALPHA", "SIGMA", "BETA", "GAMMA"]
 
-EPOCH_LENGTH = 5
+EPOCH_LENGTH = 30
 
 ERROR = False
 
@@ -25,14 +28,33 @@ ERROR = False
 def run(ids_file, token):
     ids_file = open(ids_file)
     ids = []
-    for line in ids_file:
-        ids.append(line.replace('\n', ''))
+    # for line in ids_file:
+    #     ids.append(line.replace('\n', ''))
+
+    file = reader(ids_file)
+    for row in file:
+        if row[0] == 'ID':
+            continue
+        elif row[1] == 'CNC':
+            ids.append('mnc/cnc/' + row[0].lower() + '-nsrr')
+        elif row[1] == 'SSC':
+            ids.append('mnc/ssc/' + row[0].lower() + '-nsrr')
+        elif row[3] == 1:
+            ids.append('mnc/dhc/training/' + row[0].lower() + '-nsrr')
+        elif row[4] == 1:
+            ids.append('mnc/dhc/test/control' + row[0].lower() + '-nsrr')
+        elif row[5] == 1:
+            ids.append('mnc/dhc/test/nc-lh' + row[0].lower() + '-nsrr')
+        elif row[6] == 1:
+            ids.append('mnc/dhc/test/nc-nh' + row[0].lower() + '-nsrr')
+
+
 
     for id in ids:
         global ERROR
         ERROR = False
-        edf = EDF_PREFIX + id + EDF_SUFFIX
-        xml = XML_PREFIX + id + XML_SUFFIX
+        edf = id + EDF_SUFFIX
+        xml = id + XML_SUFFIX
         out = OUT_PREFIX + id + OUT_SUFFIX
         out = open(out, 'w')
         result = subprocess.run('nsrr ' + 'download ' + edf + " " + token + ' --fast', shell = True, stdout = out)
@@ -86,6 +108,8 @@ def process(id, edf, xml, out):
 
     if not ERROR:
         epochs = retrieve_epochs(data, out)
+        print("---------------------------epochs")
+        print(epochs)
     for i in range(epochs):
         arr.append([])
 
@@ -99,6 +123,8 @@ def process(id, edf, xml, out):
         retrieve_stats('SaO2', arr, data, out)
     if not ERROR:
         retrieve_stats('PULSE', arr, data, out)
+    if not ERROR:
+        sudden_changes(arr)
 
 
     arr = np.array(arr)
@@ -176,3 +202,43 @@ def retrieve_stats(signal, arr, data, out):
         list = line.split()
         for i in range(3, 8):
             a.append(np.float32(float(list[i])))
+
+F1_RANGE = 59
+F2_RANGE = 4
+F3_RANGE = 4
+F3N = 9
+
+def sudden_changes(arr):
+    np_arr = np.array(arr)
+    length = np_arr.shape[0]
+    for i, a in enumerate(arr):
+        f1_min = max(0, i - F1_RANGE)
+        f1_max = min(length, i + F1_RANGE + 1)
+        f1_arr = np_arr[f1_min : f1_max]
+        f1_arr = np.average(f1_arr, 0)
+
+        f2_min = max(0, i - F2_RANGE)
+        f2_max = min(length, i + F2_RANGE + 1)
+        f2_arr = np_arr[f2_min : f2_max]
+        f2_arr = np.median(f2_arr, 0)
+
+        f3_min = max(0, i - F3_RANGE)
+        f3_max = min(length, i + F3_RANGE + 1)
+        f3_arr = np_arr[f3_min : f3_max]
+        f3_vals = np.average(f3_arr, 0)
+
+        for j in range(len(a)):
+            e = a[j]
+            f1 = e - f1_arr[j]
+            f2 = e - f2_arr[j]
+            f3 = 0
+            for a2 in f3_arr:
+                val = a2[j] - f3_vals[j]
+                val = val ** 2
+                f3 += val
+            f3 /= f3_arr.shape[0]
+            f3 = math.sqrt(f3)
+
+            a.append(np.float32(f1))
+            a.append(np.float32(f2))
+            a.append(np.float32(f3))

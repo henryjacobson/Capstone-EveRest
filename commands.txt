@@ -1,4 +1,4 @@
-EPOCH epoch=5,5
+EPOCH epoch=30,30
 STATS epoch
 PSD epoch
 ANNOTS epoch start

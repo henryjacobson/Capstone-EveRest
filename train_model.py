@@ -6,6 +6,8 @@ from tensorflow.keras.layers import LSTM
 from tensorflow.keras.layers import Dense
 from tensorflow.nn import relu
 
+from sklearn import svm
+
 FEATURES = "data/features/"
 LABELS   = "data/labels/"
 
@@ -17,7 +19,7 @@ class Data:
         self.mask = mask
 
 # returns masked and well formed lstm input data
-def load_training_data(amount = -1):
+def load_training_data(amount = -1, tensors = True):
     # load features
     features = []
     longest = 0
@@ -56,12 +58,15 @@ def load_training_data(amount = -1):
 
     features = np.array(features)
     labels = np.array(labels).astype(np.int)
+    onehot = labels
     mask = np.array(mask)
 
-    features = tf.convert_to_tensor(features)
-    labels = tf.convert_to_tensor(labels)
-    onehot = tf.one_hot(labels, 2)
-    mask = tf.convert_to_tensor(mask)
+    if (tensors):
+        features = tf.convert_to_tensor(features)
+        labels = tf.convert_to_tensor(labels)
+        onehot = tf.one_hot(labels, 2)
+        mask = tf.convert_to_tensor(mask)
+
     return Data(features, labels, onehot, mask)
 
 class LSTMModel(Model):
@@ -69,15 +74,12 @@ class LSTMModel(Model):
         super(LSTMModel, self).__init__()
         self.lstm0 = LSTM(32, return_sequences = True)
         self.lstm1 = LSTM(32, return_sequences = True)
-        self.lstm2 = LSTM(32, return_sequences = True)
         self.dense = Dense(2)
 
     def call(self, x, mask = None):
         x = self.lstm0(x, mask = mask, training = True)
         x = relu(x)
         x = self.lstm1(x, mask = mask, training = True)
-        x = relu(x)
-        x = self.lstm2(x, mask = mask, training = True)
         x = relu(x)
         x = self.dense(x)
         return x
@@ -88,7 +90,7 @@ def train_model(model, n_epochs, data = None):
         train_accuracy.reset_states()
         with tf.GradientTape() as tape:
             predictions = model(features, mask)
-            loss = tf.nn.weighted_cross_entropy_with_logits(labels, predictions, 1000*1000*1000*1000)   #loss_object(labels, predictions, sample_weight = tf.constant([.25, .75]))
+            loss = loss_object(labels, predictions) #tf.nn.weighted_cross_entropy_with_logits(labels, predictions, .001) #
         gradients = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         train_accuracy(data.labels, predictions)
@@ -96,7 +98,7 @@ def train_model(model, n_epochs, data = None):
 
 
 
-    # tf.keras.losses.SparseCategoricalCrossentropy(from_logits = True)
+    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits = True)
     optimizer = tf.keras.optimizers.SGD()
     train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
 
@@ -104,7 +106,7 @@ def train_model(model, n_epochs, data = None):
         data = load_training_data()
 
     for epoch in range(n_epochs):
-        loss, predictions = training_step(data.features, data.onehot, data.mask)
+        loss, predictions = training_step(data.features, data.labels, data.mask)
 
         asleep_idxs = data.mask#np.bitwise_and(data.labels == 0, data.mask)
         asleep = np.argmin(predictions[asleep_idxs], axis = 1)
@@ -113,3 +115,11 @@ def train_model(model, n_epochs, data = None):
         awake_class = np.argmax(predictions[data.mask], axis = 1)
 
         print('Epoch {}, Accuracy {}, asleep {}, awake {}/{}'.format(epoch + 1, train_accuracy.result(), sum(asleep), sum(awake), sum(awake_class)))
+
+def train_svm(data, max_iter = -1):
+    svc = svm.SVC(max_iter = max_iter)
+    svc.fit(data.features, data.labels)
+    preds = svc.predict(data.features)
+    correct = np.where(preds == data.labels, 1, 0)
+    print(sum(correct) / correct.size)
+    return svc
